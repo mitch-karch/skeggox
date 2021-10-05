@@ -1,0 +1,87 @@
+flowchart LR
+    %% @config{config.json}
+
+    subgraph mbp["User Input Device"]
+        direction LR
+        Keyboard("<img width='80' src='https://static.thenounproject.com/png/91947-200.png' /><br>USB<br/> Keyboard")
+
+        subgraph input-container[Image Capture Container]
+            python-input("<img width='80'; src='https://cdn.iconscout.com/icon/free/png-256/python-3628999-3030224.png'/> <br> Python <br/> User Input")
+        end
+
+        Keyboard --User Marked\n Score--> python-input
+    end
+
+    python-input --MQTT Publish\nScore--> user-input-topic
+
+
+    subgraph rpi["Raspberry Pi Zero"]
+
+        Camera("<img width='80' src='https://static.thenounproject.com/png/589767-200.png' /><br>USB<br/> Webcam")
+
+        subgraph camera-container[Image Capture Container]
+            python-face("<img width='80'; src='https://cdn.iconscout.com/icon/free/png-256/python-3628999-3030224.png'/> <br> Python <br/> Camera Input")
+        end
+
+        Camera --> camera-container
+
+    end
+
+    subgraph jetson["Nvidia Jetson Edge Device"]
+
+        subgraph KubNV["Kubernetes Pod"]
+        subgraph client-mqtt[MQTT Broker Container]
+            user-input-topic("<img src='https://static.thenounproject.com/png/9658-200.png'; width='80'/><br>Topic <br/> Scored_values") 
+            labelled_images_topic("<img src='https://static.thenounproject.com/png/9658-200.png'; width='80'/><br>Topic <br/> Labelled Images") 
+        end
+
+        
+
+
+            
+            subgraph mqtt-listen[MQTT Logger Container]
+                python-listen("<img width='80' src='https://cdn.iconscout.com/icon/free/png-256/python-3628999-3030224.png' /><br> Python <br/> MQTT Logger")
+            end
+
+            %%subgraph mqtt-forward[MQTT Forwarding Container]
+            %%    python-forward("<img width='80' src='https://cdn.iconscout.com/icon/free/png-256/python-3628999-3030224.png' /><br> Python <br/> MQTT Forwarder")
+            %%end
+
+            
+            python-face --MQTT Publish <br/> Labelled JPEG--> labelled_images_topic
+
+            python-face <--MQTT Subscribe <br/> Score --> user-input-topic
+            labelled_images_topic <--MQTT Subscribe<br/>Labelled JPEG--> python-listen
+        end
+        drive("<img src='https://static.thenounproject.com/png/965901-200.png'; width='80'/><br>Storage<br/>Labelled Images ") 
+        python-listen --> drive
+
+        %%kubConfig("<img src='https://cdn2.iconfinder.com/data/icons/mixd/512/20_kubernetes-512.png'; width='80'/><br>Kubernetes<br/> Configuration Yaml") 
+        %%kubConfig --> KubNV
+        %%kubedgeervice("<img src='https://static.thenounproject.com/png/2040656-200.png'; width='80'/><br>Kubernetes<br/> Service Deployment") 
+    end
+
+    subgraph aws
+        s3fs("<img width='80' src='https://i.imgur.com/HCNNuCL.png' /><br> S3FS <br/> Mounted Folder")
+    end
+    python-listen --> s3fs
+
+
+
+
+
+classDef container fill:#0db7ed,stroke:#444444,stroke-width:2px
+classDef kuber fill:#9db8e9,stroke:#444444,stroke-width:2px
+classDef nv fill:#76B900,stroke:#444444,stroke-width:3px
+classDef raspbi fill:#f57fa1,stroke:#444444,stroke-width:3px
+classDef apple fill:#dadad8,stroke:#444444,stroke-width:3px
+classDef az fill:#FF9900,stroke:#444444,stroke-width:3px
+
+class face,client-mqtt,mqtt-listen,mqtt-forward,cloud-mqtt,cloud-Render,input-container,camera-container container;
+class KubCl,KubNV kuber;
+class jetson nv;
+class rpi raspbi;
+class mbp apple;
+class aws az;
+
+linkStyle default stroke:#000,stroke-width:4px;

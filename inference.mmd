@@ -1,0 +1,74 @@
+flowchart LR
+    %% @config{config.json}
+
+
+    subgraph rpi["Raspberry Pi Zero"]
+
+        Camera("<img width='80' src='https://static.thenounproject.com/png/589767-200.png' /><br>USB<br/> Webcam")
+
+        subgraph camera-container[Image Capture Container]
+            python-face("<img width='80'; src='https://cdn.iconscout.com/icon/free/png-256/python-3628999-3030224.png'/> <br> Python <br/> Camera Input")
+        end
+
+        Camera --> camera-container
+
+    end
+
+    subgraph jetson["Nvidia Jetson Edge Device"]
+
+        subgraph KubNV["Kubernetes Pod"]
+        subgraph client-mqtt[MQTT Broker Container]
+            unlabelled_images_topic("<img src='https://static.thenounproject.com/png/9658-200.png'; width='80'/><br>Topic <br/> Unknown Images") 
+            labelled_images_topic("<img src='https://static.thenounproject.com/png/9658-200.png'; width='80'/><br>Topic <br/> Labelled Images") 
+        end
+
+            subgraph mqtt-process[Processing Container]
+                python-detect("<img width='80' src='https://cdn.iconscout.com/icon/free/png-256/python-3628999-3030224.png' /><br> Python <br/> Inference Model")
+            end
+            subgraph mqtt-listen[MQTT Logger Container]
+                python-listen("<img width='80' src='https://cdn.iconscout.com/icon/free/png-256/python-3628999-3030224.png' /><br> Python <br/> MQTT Logger")
+            end
+
+
+           
+            python-face --MQTT Publish <br/> JPEG captured at 1hz--> unlabelled_images_topic
+
+            unlabelled_images_topic <--MQTT Subscribe<br/>Unkonwn JPEG--> python-detect
+
+            labelled_images_topic <--MQTT Publish<br/> Infered JPEG--> python-detect
+            labelled_images_topic <--MQTT Subscribe<br/>Infered JPEG--> python-listen
+        end
+        drive("<img src='https://static.thenounproject.com/png/965901-200.png'; width='80'/><br>Storage<br/>Labelled Images ") 
+        html("<img src='https://static.thenounproject.com/png/288310-200.png'; width='80'/><br>Display<br/>Labelled Images ") 
+        python-listen --> drive
+        python-listen --> html
+
+        %%kubConfig("<img src='https://cdn2.iconfinder.com/data/icons/mixd/512/20_kubernetes-512.png'; width='80'/><br>Kubernetes<br/> Configuration Yaml") 
+        %%kubConfig --> KubNV
+        %%kubedgeervice("<img src='https://static.thenounproject.com/png/2040656-200.png'; width='80'/><br>Kubernetes<br/> Service Deployment") 
+    end
+
+    subgraph aws
+        s3fs("<img width='80' src='https://i.imgur.com/HCNNuCL.png' /><br> S3FS <br/> Mounted Folder")
+    end
+    python-listen --> s3fs
+
+
+
+
+
+classDef container fill:#0db7ed,stroke:#444444,stroke-width:2px
+classDef kuber fill:#9db8e9,stroke:#444444,stroke-width:2px
+classDef nv fill:#76B900,stroke:#444444,stroke-width:3px
+classDef raspbi fill:#f57fa1,stroke:#444444,stroke-width:3px
+classDef apple fill:#dadad8,stroke:#444444,stroke-width:3px
+classDef az fill:#FF9900,stroke:#444444,stroke-width:3px
+
+class face,client-mqtt,mqtt-listen,mqtt-forward,mqtt-process,cloud-mqtt,cloud-Render,input-container,camera-container container;
+class KubCl,KubNV kuber;
+class jetson nv;
+class rpi raspbi;
+class mbp apple;
+class aws az;
+
+linkStyle default stroke:#000,stroke-width:4px;
