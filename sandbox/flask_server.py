@@ -2,7 +2,6 @@
 # import the necessary packages
 from uuid import uuid4
 from flask import Flask, render_template, Response
-import cv2
 
 from flask_video import VideoCamera
 
@@ -28,14 +27,15 @@ def video_feed():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-ONE, THREE, FIVE, LC, RC, ZERO = "1", "3", "5", "lc", "rc", "0"
+ONE, THREE, FIVE, LC, RC, ZERO, EMPTY = "1", "3", "5", "LC", "RC", "0", "E"
 AVAILABLE_COMMANDS = {
     'One': ONE,
     'Three': THREE,
     'Five': FIVE,
     'Left Clutch': LC,
     'Right Clutch': RC,
-    'Zero': ZERO
+    'Zero': ZERO,
+    'Empty': EMPTY
 }
 
 @app.route('/<cmd>')
