@@ -1,0 +1,3 @@
+*.pyc
+sandbox/caps/*
+.DS_Store
