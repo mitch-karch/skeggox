@@ -3,7 +3,7 @@
 from uuid import uuid4
 from flask import Flask, render_template, Response
 
-from flask_video import VideoCamera
+from camera_interface import VideoCamera
 
 frame = None
 

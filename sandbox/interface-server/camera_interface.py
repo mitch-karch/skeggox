@@ -1,5 +1,3 @@
-# Test Script
-import flask
 import cv2
 from uuid import uuid4
 # raspivid -n -w 1024 -h 768 -t 0 -o - | gst-launch-1.0 -v fdsrc ! h264parse ! rtph264pay config-interval=10 pt=96 ! udpsink host=192.168.0.100 port=9000
