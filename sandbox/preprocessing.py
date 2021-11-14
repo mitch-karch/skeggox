@@ -2,12 +2,12 @@
 #TODO automate the pull from app.box
 
 import cv2
-import argparse
 import numpy as np
+from matplotlib import pyplot as plt
+from skimage.restoration import denoise_nl_means, estimate_sigma
+from skimage import io, img_as_float
+import argparse
 import imutils
-
-img = cv2.imread('img.png')
-windowName = 'image'
 
 '''
 steps to perform:
@@ -17,82 +17,82 @@ steps to perform:
         - transform perspective and straighten
 '''
 
+#load dummy image to test
+img_color = cv2.imread('img.png')
+img = cv2.imread('img.png', 0) #load in b&w
 
-def order_points(pts):
-	# initialzie a list of coordinates that will be ordered
-	# such that the first entry in the list is the top-left,
-	# the second entry is the top-right, the third is the
-	# bottom-right, and the fourth is the bottom-left
-	rect = np.zeros((4, 2), dtype = "float32")
-	# the top-left point will have the smallest sum, whereas
-	# the bottom-right point will have the largest sum
-	s = pts.sum(axis = 1)
-	rect[0] = pts[np.argmin(s)]
-	rect[2] = pts[np.argmax(s)]
-	# now, compute the difference between the points, the
-	# top-right point will have the smallest difference,
-	# whereas the bottom-left will have the largest difference
-	diff = np.diff(pts, axis = 1)
-	rect[1] = pts[np.argmin(diff)]
-	rect[3] = pts[np.argmax(diff)]
-	# return the ordered coordinates
-	return rect
+#resize the image
+img_color = imutils.resize(img_color, height = 500)
+img = imutils.resize(img, height = 500)
 
-def four_point_transform(image, pts):
-	# obtain a consistent order of the points and unpack them
-	# individually
-	rect = order_points(pts)
-	(tl, tr, br, bl) = rect
-	# compute the width of the new image, which will be the
-	# maximum distance between bottom-right and bottom-left
-	# x-coordiates or the top-right and top-left x-coordinates
-	widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
-	widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
-	maxWidth = max(int(widthA), int(widthB))
-	# compute the height of the new image, which will be the
-	# maximum distance between the top-right and bottom-right
-	# y-coordinates or the top-left and bottom-left y-coordinates
-	heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
-	heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
-	maxHeight = max(int(heightA), int(heightB))
-	# now that we have the dimensions of the new image, construct
-	# the set of destination points to obtain a "birds eye view",
-	# (i.e. top-down view) of the image, again specifying points
-	# in the top-left, top-right, bottom-right, and bottom-left
-	# order
-	dst = np.array([
-		[0, 0],
-		[maxWidth - 1, 0],
-		[maxWidth - 1, maxHeight - 1],
-		[0, maxHeight - 1]], dtype = "float32")
-	# compute the perspective transform matrix and then apply it
-	M = cv2.getPerspectiveTransform(rect, dst)
-	warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
-	# return the warped image
-	return warped
+#equalize the histogram of the grayscale image
+eq_img = cv2.equalizeHist(img)
+#plot to see the distribution between the original image and the equalized img
+plt.hist(img.flat, bins = 100, range=(0,255))
+plt.hist(eq_img.flat, bins = 100, range=(0,255))
 
+#show the original image and the equalized img
+cv2.imshow('original_color', img_color)
+cv2.imshow('original', img)
+cv2.imshow('eq_img', eq_img)
+
+#convert the img to lab
+lab= cv2.cvtColor(img_color, cv2.COLOR_BGR2LAB)
+cv2.imshow("lab",lab)
+
+#convert the img to hsv
+hsv = cv2.cvtColor(img_color, cv2.COLOR_BGR2HSV )
+cv2.imshow("hsv",hsv)
+
+l, a, b = cv2.split(lab)
+clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+cl = clahe.apply(l)
+cv2.imshow('split l', l)
+cv2.imshow('CLAHE LAB output', cl)
+
+h, a, b = cv2.split(lab)
+clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+clh = clahe.apply(h)
+cv2.imshow('split h', h)
+cv2.imshow('CLAHE HSV output', clh)
+
+#turn img to float
+img_float = img_as_float(img)
+
+#determine the sigma for denoising
+sigma_est = np.mean(estimate_sigma(img_float, multichannel=False))
+
+#denoise the image
+denoise_img = denoise_nl_means(img_float, h=1.*sigma_est, fast_mode=True,
+                              patch_size=5,
+                              patch_distance=3,
+                              multichannel=False)
+cv2.imshow('denoised img', denoise_img)
+
+#standard open cv functions to keep the image window active
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
 
-image = cv2.imread('img.png')
-ratio = image.shape[0] / 500.0
-orig = image.copy()
-image = imutils.resize(image, height = 500)
-img = imutils.resize(image, height = 500)
+
+
+
+
 # convert the image to grayscale, blur it, and find edges
 # in the image
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+gray = cv2.cvtColor(img_color, cv2.COLOR_BGR2GRAY)
 gray = cv2.GaussianBlur(gray, (5, 5), 0)
 # kernel = np.ones((5,5),np.float32)/25
 # gray = cv2.filter2D(src=gray, ddepth=-1, kernel=kernel)
 edged = cv2.Canny(gray, threshold1=20, threshold2=200, apertureSize=3, L2gradient=False)
 # show the original image and the edge detected image
 print("STEP 1: Edge Detection")
-cv2.imshow("Image", image)
+cv2.imshow("Image", img)
 cv2.imshow("Edged", edged)
 
 cv2.imshow('gray', gray)
 
-lab= cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+lab= cv2.cvtColor(img_color, cv2.COLOR_BGR2LAB)
 cv2.imshow("lab",lab)
 
 l, a, b = cv2.split(lab)
@@ -116,6 +116,10 @@ cv2.waitKey(0)
 cv2.destroyAllWindows()
 
 
+
+
+
+
 # find the contours in the edged image, keeping only the
 # largest ones, and initialize the screen contour
 cnts = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -133,8 +137,8 @@ for c in cnts:
 		break
 # show the contour (outline) of the piece of paper
 print("STEP 2: Find contours of paper")
-cv2.drawContours(image, [screenCnt], -1, (0, 255, 0), 2)
-cv2.imshow("Outline", image)
+cv2.drawContours(img, [screenCnt], -1, (0, 255, 0), 2)
+cv2.imshow("Outline", img)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
@@ -143,7 +147,7 @@ cv2.destroyAllWindows()
 alpha = 1.7 # Contrast control (1.0-3.0)
 beta = -100 # Brightness control (0-100)
 
-adjusted = cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
+adjusted = cv2.convertScaleAbs(img, alpha=alpha, beta=beta)
 
 
 gray = cv2.cvtColor(adjusted, cv2.COLOR_BGR2GRAY)
@@ -160,10 +164,11 @@ gray2 = cv2.filter2D(src=gray2, ddepth=-2, kernel=kernel)
 edged2 = cv2.Canny(gray2, threshold1=75, threshold2=200, apertureSize=3, L2gradient=False)
 # show the original image and the edge detected image
 
-cv2.imshow('original', image)
+cv2.imshow('original', img)
 cv2.imshow('adjusted', adjusted)
 cv2.imshow('final', final)
 cv2.imshow("Edged", edged)
 cv2.imshow("Edged2", edged2)
 cv2.waitKey()
+cv2.destroyAllWindows()
 
