@@ -13,7 +13,7 @@ class VideoCamera(object):
             "! rtph264depay"
             "! video/x-h264,width=1024,height=768,framerate=30/1"
             "! h264parse"
-            "! avdec_h264"
+            "! omxh264dec"
             "! videoconvert"
             "! appsink ",
             cv2.CAP_GSTREAMER,
