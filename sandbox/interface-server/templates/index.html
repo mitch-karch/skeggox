@@ -20,6 +20,10 @@
                 width:100%;
                 height:17%;
             }
+            #preview{
+                width:25%;
+                height:25%;
+            }
         </style>
 
         <script>
@@ -49,6 +53,7 @@
                 // We could do more interesting things with the response
                 // or, we could ignore it entirely
                 console.log(request.responseText);
+                document.getElementById('preview').src=request.responseText
             };
             // We point the request at the appropriate command
             request.open("GET", "/" + command, true);
@@ -62,7 +67,7 @@
     </head>
     <body>
 
-        <h1>Skeggox: Capture</h1>
+        <h3>Skeggox: Capture</h1>
         <div class="outer">
             <img id="bg" src="{{ url_for('video_feed') }}">
 
@@ -74,8 +79,10 @@
                 </button>
             {% endfor %}
 
+
             </span>
 
+        <img id='preview' src="{{ url_for('static', filename='base.jpg') }}" />
         </div>
     </body>
 </html>
