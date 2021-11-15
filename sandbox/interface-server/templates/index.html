@@ -4,25 +4,93 @@
         <meta http-equiv="content-type" content="text/html; charset=utf-8">
         <title>Skeggox</title>
         <style>
+            html{
+                background-color: #323336;
+            }
+            h3{
+                color:#fff;
+                font-size:x-large;
+            }
             .buttons{
                 display: inline-flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 
-                border: solid 3px black;
-                width: 400px;
+                border: solid 3px #646464;
+                width: 200px;
+                background-color: #323336;
+                padding: 5px;
+                border-radius:6px;
             }
             .outer{
-                display:flex
-            }
-            .command{
-                width:100%;
-                height:17%;
+                display:flex;
             }
             #preview{
                 width:25%;
                 height:25%;
+            }
+
+            .command {
+                width:100%;
+                height:17%;
+                font-size: xx-large;
+                border: none;
+                outline: none;
+                color: #fff;
+                background: #111;
+                cursor: pointer;
+                position: relative;
+                z-index: 0;
+                border-radius: 10px;
+                margin:6px;
+            }
+
+            .command:before {
+                content: '';
+                background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+                position: absolute;
+                top: -2px;
+                left:-2px;
+                background-size: 400%;
+                z-index: -1;
+                filter: blur(5px);
+                width: calc(100% + 4px);
+                height: calc(100% + 4px);
+                animation: glowing 20s linear infinite;
+                opacity: 0;
+                transition: opacity .3s ease-in-out;
+                border-radius: 10px;
+            }
+
+            .command:active {
+                color: #000
+            }
+
+            .command:active:after {
+                background: transparent;
+            }
+
+            .command:hover:before {
+                opacity: 1;
+            }
+
+            .command:after {
+                z-index: -1;
+                content: '';
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                background: #111;
+                left: 0;
+                top: 0;
+                border-radius: 10px;
+            }
+
+            @keyframes glowing {
+                0% { background-position: 0 0; }
+                50% { background-position: 400% 0; }
+                100% { background-position: 0 0; }
             }
         </style>
 
@@ -67,7 +135,7 @@
     </head>
     <body>
 
-        <h3>Skeggox: Capture</h1>
+        <h3>Skeggox: Capture</h3>
         <div class="outer">
             <img id="bg" src="{{ url_for('video_feed') }}">
 
