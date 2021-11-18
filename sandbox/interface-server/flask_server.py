@@ -2,7 +2,7 @@
 from uuid import uuid4
 from flask import Flask, render_template, Response
 
-from camera_interface import VideoCamera
+from opencv_camera import Camera
 
 frame = None
 
@@ -20,14 +20,12 @@ def gen(camera):
     while True:
         # get camera frame
         frame = camera.get_frame()
-        yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n\r\n")
+        yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
 
 
 @app.route("/video_feed")
 def video_feed():
-    return Response(
-        gen(VideoCamera()), mimetype="multipart/x-mixed-replace; boundary=frame"
-    )
+    return Response(gen(Camera()), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
 ONE, THREE, FIVE, LC, RC, ZERO, EMPTY = "1", "3", "5", "LC", "RC", "0", "E"
