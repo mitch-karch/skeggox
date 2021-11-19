@@ -11,13 +11,42 @@
             h3{
                 color:#fff;
                 font-size:x-large;
+                margin:10px;
+                text-align:center;
+                font-family: Helvetica,Arial, sans-serif;
+                font-weight:lighter;
             }
+            .live_view{
+                display:flex;
+                flex-direction: row;
+                padding:7px;
+                background-color: #47484d;
+                border-radius: 5px;
+            }
+            .remap_view{
+                display:flex;
+                flex-direction: column;
+                padding:7px;
+                background-color: #787983;
+                border-radius: 5px;
+            }
+            .remap-buttons{
+                display: inline-flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                
+                border: solid 3px #646464;
+                background-color: #323336;
+                padding: 5px;
+                border-radius:6px;
+            }
+
             .buttons{
                 display: inline-flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                
                 border: solid 3px #646464;
                 width: 200px;
                 background-color: #323336;
@@ -28,8 +57,8 @@
                 display:flex;
             }
             #preview{
-                width:25%;
-                height:25%;
+                width:100%;
+                height:100%;
             }
 
             .command {
@@ -44,7 +73,8 @@
                 position: relative;
                 z-index: 0;
                 border-radius: 10px;
-                margin:6px;
+                margin:3px;
+                height:100%;
             }
 
             .command:before {
@@ -96,40 +126,25 @@
         </style>
 
         <script>
-        // Only run what comes next *after* the page has loaded
         addEventListener("DOMContentLoaded", function() {
-        // Grab all of the elements with a class of command
-        // (which all of the buttons we just created have)
-        var commandButtons = document.querySelectorAll(".command");
-        for (var i=0, l=commandButtons.length; i<l; i++) {
-            var button = commandButtons[i];
-            // For each button, listen for the "click" event
-            button.addEventListener("click", function(e) {
-            // When a click happens, stop the button
-            // from submitting our form (if we have one)
-            e.preventDefault();
+            var commandButtons = document.querySelectorAll(".command");
+            for (var i=0, l=commandButtons.length; i<l; i++) {
+                var button = commandButtons[i];
+                button.addEventListener("click", function(e) {
+                e.preventDefault();
 
-            var clickedButton = e.target;
-            var command = clickedButton.value;
+                var clickedButton = e.target;
+                var command = clickedButton.value;
 
-            // Now we need to send the data to our server
-            // without reloading the page - this is the domain of
-            // AJAX (Asynchronous JavaScript And XML)
-            // We will create a new request object
-            // and set up a handler for the response
-            var request = new XMLHttpRequest();
-            request.onload = function() {
-                // We could do more interesting things with the response
-                // or, we could ignore it entirely
-                console.log(request.responseText);
-                document.getElementById('preview').src=request.responseText
-            };
-            // We point the request at the appropriate command
-            request.open("GET", "/" + command, true);
-            // and then we send it off
-            request.send();
-            });
-        }
+                var request = new XMLHttpRequest();
+                request.onload = function() {
+                    console.log(request.responseText);
+                    document.getElementById('preview').src=request.responseText
+                };
+                request.open("GET", "/" + command, true);
+                request.send();
+                });
+            }
         }, true);
         </script>
 
@@ -138,20 +153,32 @@
 
         <h3>Skeggox: Capture</h3>
         <div class="outer">
-            <img id="bg" src="{{ url_for('video_feed') }}">
+            <span class="live_view">
+                <img id="bg" src="{{ url_for('video_feed') }}">
 
-            <span class="buttons">
+                <span class="buttons">
 
-            {% for label, command in commands.items() %}
-                <button class="command command-{{ command }}" value="{{ command }}">
-                    {{ label }}
-                </button>
-            {% endfor %}
+                {% for label, command in commands.items() %}
+                    <button class="command command-{{ command }}" value="{{ command }}">
+                        {{ label }}
+                    </button>
+                {% endfor %}
 
-
+                </span>
             </span>
 
-        <img id='preview' src="{{ url_for('static', filename='base.jpg') }}" />
+            <span class="remap_view">
+                <img id='preview' src="{{ url_for('static', filename='base.jpg') }}" />
+
+                <span class="remap-buttons">
+                {% for label, command in remap_commands.items() %}
+                    <button class="command command-{{ command }}" value="{{ command }}">
+                        {{ label }}
+                    </button>
+                {% endfor %}
+
+                </span>
+            </span>
         </div>
     </body>
 </html>

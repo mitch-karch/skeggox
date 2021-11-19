@@ -5,14 +5,16 @@ from flask import Flask, render_template, Response
 from opencv_camera import Camera
 
 frame = None
-
+file_string = None
 app = Flask(__name__)
 
 
 @app.route("/")
 def index():
     # rendering webpage
-    return render_template("index.html", commands=AVAILABLE_COMMANDS)
+    return render_template(
+        "index.html", commands=AVAILABLE_COMMANDS, remap_commands=AVAILABLE_COMMANDS
+    )
 
 
 def gen(camera):
@@ -42,7 +44,19 @@ AVAILABLE_COMMANDS = {
 
 @app.route("/<cmd>")
 def command(cmd=None):
-    global frame
+    global frame, file_string
+
+    file_string = f"static/caps/{uuid4()}_{cmd}.jpg"
+    with open(file_string, "wb") as f:
+        f.write(frame)
+
+    response = file_string
+    return response, 200, {"Content-Type": "text/plain"}
+
+
+@app.route("/remap/<cmd>")
+def remap_command(cmd=None):
+    global frame, file_string
 
     file_string = f"static/caps/{uuid4()}_{cmd}.jpg"
     with open(file_string, "wb") as f:
