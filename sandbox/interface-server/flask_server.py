@@ -1,6 +1,7 @@
 # Skeggox Interface Server
 from uuid import uuid4
 from flask import Flask, render_template, Response
+import re, os
 
 from opencv_camera import Camera
 
@@ -58,11 +59,11 @@ def command(cmd=None):
 def remap_command(cmd=None):
     global frame, file_string
 
-    file_string = f"static/caps/{uuid4()}_{cmd}.jpg"
-    with open(file_string, "wb") as f:
-        f.write(frame)
+    new_string = re.sub('(.*_)(.*).jpg',f"\g<1>{cmd}.jpg",file_string)
+    os.rename(file_string,new_string)
+    file_string = new_string
 
-    response = file_string
+    response = new_string
     return response, 200, {"Content-Type": "text/plain"}
 
 

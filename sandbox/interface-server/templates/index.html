@@ -61,7 +61,7 @@
                 height:100%;
             }
 
-            .command {
+            .command, .remap_command {
                 width:100%;
                 height:17%;
                 font-size: xx-large;
@@ -77,7 +77,7 @@
                 height:100%;
             }
 
-            .command:before {
+            .command:before, .remap_command:before{
                 content: '';
                 background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
                 position: absolute;
@@ -94,19 +94,19 @@
                 border-radius: 10px;
             }
 
-            .command:active {
+            .command:active, .remap_command:before {
                 color: #000
             }
 
-            .command:active:after {
+            .command:active:after, .remap_command:active:after {
                 background: transparent;
             }
 
-            .command:hover:before {
+            .command:hover:before, .remap_command:hover:before {
                 opacity: 1;
             }
 
-            .command:after {
+            .command:after, .remap_command:after{
                 z-index: -1;
                 content: '';
                 position: absolute;
@@ -145,6 +145,25 @@
                 request.send();
                 });
             }
+            var remapcommandButtons = document.querySelectorAll(".remap_command");
+            for (var i=0, l=remapcommandButtons.length; i<l; i++) {
+                var button = remapcommandButtons[i];
+                button.addEventListener("click", function(e) {
+                e.preventDefault();
+
+                var clickedButton = e.target;
+                var command = clickedButton.value;
+
+                var request = new XMLHttpRequest();
+                request.onload = function() {
+                    console.log(request.responseText);
+                    document.getElementById('preview').src=request.responseText
+                };
+                request.open("GET", "/remap/" + command, true);
+                request.send();
+                });
+            }
+
         }, true);
         </script>
 
@@ -172,7 +191,7 @@
 
                 <span class="remap-buttons">
                 {% for label, command in remap_commands.items() %}
-                    <button class="command command-{{ command }}" value="{{ command }}">
+                    <button class="remap_command command-{{ command }}" value="{{ command }}">
                         {{ label }}
                     </button>
                 {% endfor %}
