@@ -123,6 +123,21 @@
                 50% { background-position: 400% 0; }
                 100% { background-position: 0 0; }
             }
+            .container {
+                position: relative;
+                max-width: 800px; /* Maximum width */
+                margin: 0 auto; /* Center it */
+            }
+
+            .container .content {
+                position: absolute; /* Position the background text */
+                bottom: 0; /* At the bottom. Use top:0 to append it to the top */
+                background: rgb(0, 0, 0); /* Fallback color */
+                background: rgba(0, 0, 0, 0.5); /* Black background with 0.5 opacity */
+                color: #f1f1f1; /* Grey text */
+                width: 100%; /* Full width */
+                padding: 20px; /* Some padding */
+            }
         </style>
 
         <script>
@@ -139,7 +154,8 @@
                 var request = new XMLHttpRequest();
                 request.onload = function() {
                     console.log(request.responseText);
-                    document.getElementById('preview').src=request.responseText
+                    document.getElementById('score_label').innerHTML = request.responseText;
+                    document.getElementById('preview').src=request.responseText;
                 };
                 request.open("GET", "/" + command, true);
                 request.send();
@@ -157,7 +173,8 @@
                 var request = new XMLHttpRequest();
                 request.onload = function() {
                     console.log(request.responseText);
-                    document.getElementById('preview').src=request.responseText
+                    document.getElementById('score_label').innerHTML = request.responseText;
+                    document.getElementById('preview').src=request.responseText;
                 };
                 request.open("GET", "/remap/" + command, true);
                 request.send();
@@ -187,8 +204,12 @@
             </span>
 
             <span class="remap_view">
-                <img id='preview' src="{{ url_for('static', filename='base.jpg') }}" />
-
+                <div class="container">
+                    <img id='preview' src="{{ url_for('static', filename='base.jpg') }}" />
+                    <div class="content">
+                        <h4 id="score_label">points</h1>
+                    </div>
+                </div>
                 <span class="remap-buttons">
                 {% for label, command in remap_commands.items() %}
                     <button class="remap_command command-{{ command }}" value="{{ command }}">
