@@ -1,6 +1,6 @@
 import csv, os, re
 
-csv_list = [["Filename","label"]]
+csv_list = [["filename","label"]]
 for filename in os.listdir():
     try:
         csv_list.append([filename,re.search('.*_(.*).jpg',filename).group(1)])
