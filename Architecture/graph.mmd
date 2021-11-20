@@ -1,70 +1,51 @@
 flowchart LR
     %% @config{config.json}
-
     subgraph mbp["User Input Device"]
         direction LR
-        Keyboard("<img width='80' src='https://static.thenounproject.com/png/91947-200.png' /><br>USB<br/> Keyboard")
+        %%Keyboard("<img width='80' src='https://static.thenounproject.com/png/91947-200.png' /><br>USB<br/> Keyboard")
 
-        subgraph input-container[Image Capture Container]
-            python-input("<img width='80'; src='https://cdn.iconscout.com/icon/free/png-256/python-3628999-3030224.png'/> <br> Python <br/> User Input")
-        end
+        html-input("<img width='80'; src='https://static.thenounproject.com/png/2472836-200.png'/> <br> Webpage <br/> User Input")
 
-        Keyboard --User Marked\n Score--> python-input
+        %%Keyboard --User Marked\n Score--> html-input
     end
 
-    python-input --MQTT Publish\nScore--> user-input-topic
 
 
     subgraph rpi["Raspberry Pi Zero"]
+        direction LR
 
-        Camera("<img width='80' src='https://static.thenounproject.com/png/589767-200.png' /><br>USB<br/> Webcam")
+        Camera("<img width='80' src='https://static.thenounproject.com/png/589767-200.png' /><br>CSI<br/> Camera")
+        terminal("<img width='80' src='https://static.thenounproject.com/png/2153153-200.png' /><br>Terminal<br/> RaspiVid")
 
-        subgraph camera-container[Image Capture Container]
-            python-face("<img width='80'; src='https://cdn.iconscout.com/icon/free/png-256/python-3628999-3030224.png'/> <br> Python <br/> Camera Input")
-        end
+        gstreamer-pipeline-rpi("<img width='80'; src='https://i.imgur.com/SYN5dLQ.png'/> <br> GStreamer <br/> UDP Pipeline")
 
-        Camera --> camera-container
+
+        Camera --> terminal
+        terminal --> gstreamer-pipeline-rpi
 
     end
 
     subgraph jetson["Nvidia Jetson Edge Device"]
 
-        subgraph KubNV["Kubernetes Pod"]
-        subgraph client-mqtt[MQTT Broker Container]
-            user-input-topic("<img src='https://static.thenounproject.com/png/9658-200.png'; width='80'/><br>Topic <br/> Scored_values") 
-            labelled_images_topic("<img src='https://static.thenounproject.com/png/9658-200.png'; width='80'/><br>Topic <br/> Labelled Images") 
-        end
 
+        flask-server("<img width='80' src='https://flask.palletsprojects.com/en/2.0.x/_static/flask-icon.png' /><br> Python <br/> Flask Server")
+        open-cv("<img width='80' src='https://opencv.org/wp-content/uploads/2020/07/OpenCV_logo_no_text_.png' /><br> Python <br/> Open CV Capture")
+        gstreamer-pipeline-jetson("<img width='80'; src='https://i.imgur.com/SYN5dLQ.png'/> <br> GStreamer <br/> UDP Pipeline")
+        drive("<img src='https://static.thenounproject.com/png/965901-200.png'; width='80'/><br>Storage<br/>Labelled Images ") 
+
+        %%https://cdn.iconscout.com/icon/free/png-256/python-3628999-3030224.png
         
 
+        gstreamer-pipeline-rpi --> gstreamer-pipeline-jetson
+        gstreamer-pipeline-jetson --> open-cv
+        open-cv --> flask-server
+        flask-server --> drive
 
-            
-            subgraph mqtt-listen[MQTT Logger Container]
-                python-listen("<img width='80' src='https://cdn.iconscout.com/icon/free/png-256/python-3628999-3030224.png' /><br> Python <br/> MQTT Logger")
-            end
-
-            %%subgraph mqtt-forward[MQTT Forwarding Container]
-            %%    python-forward("<img width='80' src='https://cdn.iconscout.com/icon/free/png-256/python-3628999-3030224.png' /><br> Python <br/> MQTT Forwarder")
-            %%end
-
-            
-            python-face --MQTT Publish <br/> Labelled JPEG--> labelled_images_topic
-
-            python-face <--MQTT Subscribe <br/> Score --> user-input-topic
-            labelled_images_topic <--MQTT Subscribe<br/>Labelled JPEG--> python-listen
-        end
-        drive("<img src='https://static.thenounproject.com/png/965901-200.png'; width='80'/><br>Storage<br/>Labelled Images ") 
-        python-listen --> drive
-
+        html-input <----> flask-server
         %%kubConfig("<img src='https://cdn2.iconfinder.com/data/icons/mixd/512/20_kubernetes-512.png'; width='80'/><br>Kubernetes<br/> Configuration Yaml") 
         %%kubConfig --> KubNV
         %%kubedgeervice("<img src='https://static.thenounproject.com/png/2040656-200.png'; width='80'/><br>Kubernetes<br/> Service Deployment") 
     end
-
-    subgraph aws
-        s3fs("<img width='80' src='https://i.imgur.com/HCNNuCL.png' /><br> S3FS <br/> Mounted Folder")
-    end
-    python-listen --> s3fs
 
 
 
