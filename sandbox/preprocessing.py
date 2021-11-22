@@ -65,13 +65,20 @@ def draw_detected_edge(img_color):
     #third arg = max value used to assign to pixel values exceeding threshold
     _, thresh = cv2.threshold(blur, 175, 255, cv2.THRESH_BINARY_INV)
     
+    # apply close to connect the white areas
+    kernel = np.ones((15,1), np.uint8)
+    morph = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+    kernel = np.ones((17,3), np.uint8)
+    morph = cv2.morphologyEx(morph, cv2.MORPH_CLOSE, kernel)
+    #cv2.imshow("morph", morph)
     
-    img_edges = cv2.Canny(thresh, 100, 100, apertureSize=7)
+    
+    img_edges = cv2.Canny(morph, 100, 100, apertureSize=7)
     # img_edges = cv2.Canny(thresh, 100, 100, apertureSize=3)
     plt.imshow(img_edges)
     
     #get the hough lines for the edges
-    lines = cv2.HoughLinesP(img_edges, 1, math.pi / 180.0, 100, minLineLength=50, maxLineGap=20)
+    lines = cv2.HoughLinesP(img_edges, 1, math.pi / 180.0, 100, minLineLength=100, maxLineGap=20)
     
     
     #show the hough lines found
@@ -91,47 +98,35 @@ def draw_detected_edge(img_color):
     coords = list(zip(lines[:,:,0].flatten().tolist(),lines[:,:,1].flatten().tolist()))
     coords.extend(list(zip(lines[:,:,2].flatten().tolist(),lines[:,:,3].flatten().tolist())))
     
-    #assume that the edge will never surpass a third of the board
-    coords = [(x,y) for (x,y) in coords if x < w//3]
-    #assume the bottome of the edge will never surpass 480
-    coords = [(x,y) for (x,y) in coords if y < 480]
+    #assume that the edge will never surpass a quarter of the board
+    coords = [(x,y) for (x,y) in coords if x < w//4]
+    #assume the bottom of the edge will never surpass 480
+    coords = [(x,y) for (x,y) in coords if y < 490]
+    
+    #determine initial found edge points
+    x1, y1 = min(coords, key=sum)
+    x2, y2 = max(coords, key=sum)
+    
+    length = y2-y1
     
     
-    edgepoint_a = min(coords, key=sum)
-    edgepoint_b = max(coords, key=sum)
+    angle = math.degrees(math.atan2(y2-y1, x2-x1))
+    
+    slope = (y2-y1) / (x2-x1)
     
     
-    
-    # #find the minimum x value and max y value to see where the edge of the board is
-    # xmin = int(min(lines[:,:,0].min(axis=0), lines[:,:,2].min(axis=0)))
-    # ymax = int(max(lines[:,:,1].max(axis=0), lines[:,:,3].max(axis=0)))
-    
-    
-    # #get the index of the min and max points
-    # def find_edge_point(val, val_loc):
-    #     if val_loc == 'x':
-    #         row, _ , col = np.where(lines[:,:,[0,2]]==val)
-    #         if col == 1:
-    #             col = 2
-    #         point = (int(lines[row,0,col]), int(lines[row,0,col+1]))
-    #     else:
-    #         row, _ , col = np.where(lines[:,:,[1,3]]==val) 
-    #         if col == 1:
-    #             col = 3
-    #         point = (int(lines[row,0,col-1]), int(lines[row,0,col]))
-    #     return point
-    
-    # x1, y1 = find_edge_point(xmin, val_loc = 'x')
-    # x2, y2 = find_edge_point(ymax, val_loc = 'y')
-    
-    # angle = math.degrees(math.atan2(-y1-y2, x2-x1))
-    # h, w = img.shape[:2]
-    # center = (w//2, h//2)
+    #point slope formula to find the next point if the line segment is too short
+    #y = mx + b
+    b = -y2 + slope * x2
+    y = int(slope * (x2 + 10) - b)
+        
     
     # cv2.line(img, (x1, y1), (x2, y2), (0, 0, 0), 3)
     
     #make a line from the min and max points
-    cv2.line(img, edgepoint_a, edgepoint_b, (0, 0, 0), 3)
+    cv2.line(img, (x1, y1), (x2, y2), (0, 0, 0), 3)
+    
+    cv2.putText(img, 'line', (x2+1,y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
     
     cv2.imshow("Detected lines", img) 
     
