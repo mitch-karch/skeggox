@@ -112,21 +112,53 @@ def draw_detected_edge(img_color):
     
     angle = math.degrees(math.atan2(y2-y1, x2-x1))
     
-    slope = (y2-y1) / (x2-x1)
+    #slope
+    slope = (y1-y2)/(x1-x2)
+    #y-intercept
+    b = (x1*y2 - x2*y1)/(x1-x2)
     
+    print(f'm={slope}, b={b}')
     
-    #point slope formula to find the next point if the line segment is too short
-    #y = mx + b
-    b = -y2 + slope * x2
-    y = int(slope * (x2 + 10) - b)
+    #y = m*x + b
+    def get_startpoint(x, y):
+        #point slope formula to find the end point if the line segment is too short on top
+        while y > h//6:
+            print('minpoint', x, y)
+            x -= int(slope/2)
+            y = int(slope*x + b)
+            if y < 0:
+               x += int(slope*2) 
+               y = int(slope*x + b)
+        return x, y   
         
+    def get_endpoint(x, y):
+        #point slope formula to find the end point if the line segment is too short on bottom     
+        while y < h//1.1:
+            print('maxpoint', x,y)
+            y += int(slope)
+            x = int((y/slope) - (b/slope))
+        return x, y
+    
+    
+    
+    if length < h//1.1:
+        x_start, y_start = get_startpoint(x1, y1)
+        
+        x_end, y_end = get_endpoint(x2, y2)
+
+            
     
     # cv2.line(img, (x1, y1), (x2, y2), (0, 0, 0), 3)
     
     #make a line from the min and max points
     cv2.line(img, (x1, y1), (x2, y2), (0, 0, 0), 3)
     
-    cv2.putText(img, 'line', (x2+1,y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
+    
+    # cv2.putText(img, 'startpoint', (x_start,y_start), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
+    # cv2.putText(img, 'endpoint', (x_end,y_end), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
+    
+    #make a line from the min and max points
+    cv2.line(img, (x_start,y_start), (x_end,y_end), (255, 0, 0), 5)
     
     cv2.imshow("Detected lines", img) 
     
