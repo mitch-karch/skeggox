@@ -16,10 +16,11 @@ import imutils
 import math
 from scipy import ndimage
 from scipy import stats
+import time
 
 
 
-def draw_detected_edge(img_color):
+def draw_detected_edge(img_color):    
     #load dummy image to test
     img_color = cv2.imread(img_color)
     plt.imshow(img_color)
@@ -27,6 +28,8 @@ def draw_detected_edge(img_color):
     img = cv2.cvtColor(img_color, cv2.COLOR_BGR2GRAY)
     plt.imshow(img, cmap='gray')
     
+    #timing
+    start = time.time()
     img = cv2.normalize(img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
     img = img.astype(np.uint8)
     plt.imshow(img, cmap='gray')
@@ -82,15 +85,15 @@ def draw_detected_edge(img_color):
     
     
     #show the hough lines found
-    for [[x1, y1, x2, y2]] in lines:
-    #     # line(img, pt1, pt2, color[, thickness[, lineType[, shift]]])
-        cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), 5)
-    #     # cv2.circle(img, (x1,y1), 3, (0,150,0), -1) #line start
-    #     # cv2.circle(img, (x2,y2), 3, (128,0,0), -1) #line end
-        cv2.putText(img, str(x1) + ',' + str(y1), (x1,y1), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
-        cv2.putText(img, str(x2) + ',' + str(y2), (x2,y2), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
-    #     # angle = math.degrees(math.atan2(y2 - y1, x2 - x1))
-    #     # angles.append(angle)
+    # for [[x1, y1, x2, y2]] in lines:
+    # #     # line(img, pt1, pt2, color[, thickness[, lineType[, shift]]])
+    #     cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), 5)
+    # #     # cv2.circle(img, (x1,y1), 3, (0,150,0), -1) #line start
+    # #     # cv2.circle(img, (x2,y2), 3, (128,0,0), -1) #line end
+    #     cv2.putText(img, str(x1) + ',' + str(y1), (x1,y1), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
+    #     cv2.putText(img, str(x2) + ',' + str(y2), (x2,y2), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
+    # #     # angle = math.degrees(math.atan2(y2 - y1, x2 - x1))
+    # #     # angles.append(angle)
     
     
     
@@ -140,27 +143,120 @@ def draw_detected_edge(img_color):
         return x, y
     
     
-    
     if length < h//1.1:
         x_start, y_start = get_startpoint(x1, y1)
         
         x_end, y_end = get_endpoint(x2, y2)
 
-            
     
     # cv2.line(img, (x1, y1), (x2, y2), (0, 0, 0), 3)
     
     #make a line from the min and max points
-    cv2.line(img, (x1, y1), (x2, y2), (0, 0, 0), 3)
+    # cv2.line(img, (x1, y1), (x2, y2), (0, 0, 0), 3)
     
     
     # cv2.putText(img, 'startpoint', (x_start,y_start), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
     # cv2.putText(img, 'endpoint', (x_end,y_end), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
     
-    #make a line from the min and max points
-    cv2.line(img, (x_start,y_start), (x_end,y_end), (255, 0, 0), 5)
+    #make a line from the start and end points
+    # cv2.line(img, (x_start,y_start), (x_end,y_end), (255, 0, 0), 5)
+    
+    new_length = y_end - y_start
+    
+    #get the perpendicular line
+    def getPerpCoord(aX, aY, bX, bY, length):
+        vX = bX-aX
+        vY = bY-aY
+        #print(str(vX)+" "+str(vY))
+        if(vX == 0 or vY == 0):
+            return 0, 0, 0, 0
+        mag = math.sqrt(vX*vX + vY*vY)
+        vX = vX / mag
+        vY = vY / mag
+        temp = vX
+        vX = 0-vY
+        vY = temp
+        cX = bX + vX 
+        cY = bY + vY 
+        dX = bX - vX * length
+        dY = bY - vY * length
+        print(f'bottom right corner is {dX}, {dY}')
+        return int(cX), int(cY), int(dX), int(dY)
+    
+    cX, cY, dX, dY = getPerpCoord(x_start,y_start, x_end,y_end, new_length+10)
+    
+    tX = x_start + (dX - x_end)
+    tY = y_start + (dY - y_end)
+    
+    # cv2.line(img, (cX, cY), (dX, dY), (0, 0, 0), 3)
+    # cv2.putText(img, f'{dX}, {dY}', (dX,dY), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
+    # cv2.putText(img, f'{tX}, {tY}', (tX,tY), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
+    
+    
+    
+    def order_points(pts):
+    	# initialzie a list of coordinates that will be ordered
+    	# such that the first entry in the list is the top-left,
+    	# the second entry is the top-right, the third is the
+    	# bottom-right, and the fourth is the bottom-left
+    	rect = np.zeros((4, 2), dtype = "float32")
+    	# the top-left point will have the smallest sum, whereas
+    	# the bottom-right point will have the largest sum
+    	s = pts.sum(axis = 1)
+    	rect[0] = pts[np.argmin(s)]
+    	rect[2] = pts[np.argmax(s)]
+    	# now, compute the difference between the points, the
+    	# top-right point will have the smallest difference,
+    	# whereas the bottom-left will have the largest difference
+    	diff = np.diff(pts, axis = 1)
+    	rect[1] = pts[np.argmin(diff)]
+    	rect[3] = pts[np.argmax(diff)]
+    	# return the ordered coordinates
+    	return rect
+    
+    def four_point_transform(image, pts):
+    	# obtain a consistent order of the points and unpack them
+    	# individually
+    	rect = order_points(pts)
+    	(tl, tr, br, bl) = rect
+    	# compute the width of the new image, which will be the
+    	# maximum distance between bottom-right and bottom-left
+    	# x-coordiates or the top-right and top-left x-coordinates
+    	widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
+    	widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
+    	maxWidth = max(int(widthA), int(widthB))
+    	# compute the height of the new image, which will be the
+    	# maximum distance between the top-right and bottom-right
+    	# y-coordinates or the top-left and bottom-left y-coordinates
+    	heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
+    	heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
+    	maxHeight = max(int(heightA), int(heightB))
+    	# now that we have the dimensions of the new image, construct
+    	# the set of destination points to obtain a "birds eye view",
+    	# (i.e. top-down view) of the image, again specifying points
+    	# in the top-left, top-right, bottom-right, and bottom-left
+    	# order
+    	dst = np.array([
+    		[0, 0],
+    		[maxWidth - 1, 0],
+    		[maxWidth - 1, maxHeight - 1],
+    		[0, maxHeight - 1]], dtype = "float32")
+    	# compute the perspective transform matrix and then apply it
+    	M = cv2.getPerspectiveTransform(rect, dst)
+    	warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
+    	# return the warped image
+    	return warped
+    
+    pts = [(x_start, y_start), (tX, tY), (dX, dY), (x_end, y_end)]
+    pts = np.array(pts, dtype = "float32")
+    warped = four_point_transform(img, pts)
+    
+    #timing
+    end = time.time()
+    print(f'Time elapsed: {end-start}')
     
     cv2.imshow("Detected lines", img) 
+    cv2.imshow("warped", warped)
     
     key = cv2.waitKey(0)
 
