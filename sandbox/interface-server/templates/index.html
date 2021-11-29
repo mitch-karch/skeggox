@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="icon" href="static/favicon.ico" sizes="32x32">
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+        <title>Skeggox</title>
+        <style>
+            html{
+                background-color: #323336;
+            }
+            h3{
+                color:#fff;
+                font-size:x-large;
+                margin:10px;
+                text-align:center;
+                font-family: Helvetica,Arial, sans-serif;
+                font-weight:lighter;
+            }
+            .live_view{
+                display:flex;
+                flex-direction: row;
+                padding:7px;
+                background-color: #47484d;
+                border-radius: 5px;
+            }
+            .remap_view{
+                display:flex;
+                flex-direction: column;
+                padding:7px;
+                background-color: #787983;
+                border-radius: 5px;
+            }
+            .remap-buttons{
+                display: inline-flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                
+                border: solid 3px #646464;
+                background-color: #323336;
+                padding: 5px;
+                border-radius:6px;
+            }
+
+            .buttons{
+                display: inline-flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                border: solid 3px #646464;
+                width: 200px;
+                background-color: #323336;
+                padding: 5px;
+                border-radius:6px;
+            }
+            .outer{
+                display:flex;
+            }
+            #preview{
+                width:100%;
+                height:100%;
+            }
+
+            .command, .remap_command {
+                width:100%;
+                height:17%;
+                font-size: xx-large;
+                border: none;
+                outline: none;
+                color: #fff;
+                background: #111;
+                cursor: pointer;
+                position: relative;
+                z-index: 0;
+                border-radius: 10px;
+                margin:3px;
+                height:100%;
+            }
+
+            .command:before, .remap_command:before{
+                content: '';
+                background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+                position: absolute;
+                top: -2px;
+                left:-2px;
+                background-size: 400%;
+                z-index: -1;
+                filter: blur(5px);
+                width: calc(100% + 4px);
+                height: calc(100% + 4px);
+                animation: glowing 20s linear infinite;
+                opacity: 0;
+                transition: opacity .3s ease-in-out;
+                border-radius: 10px;
+            }
+
+            .command:active, .remap_command:before {
+                color: #000
+            }
+
+            .command:active:after, .remap_command:active:after {
+                background: transparent;
+            }
+
+            .command:hover:before, .remap_command:hover:before {
+                opacity: 1;
+            }
+
+            .command:after, .remap_command:after{
+                z-index: -1;
+                content: '';
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                background: #111;
+                left: 0;
+                top: 0;
+                border-radius: 10px;
+            }
+
+            @keyframes glowing {
+                0% { background-position: 0 0; }
+                50% { background-position: 400% 0; }
+                100% { background-position: 0 0; }
+            }
+            .container {
+                position: relative;
+                max-width: 800px; /* Maximum width */
+                margin: 0 auto; /* Center it */
+            }
+
+            .container .content {
+                position: absolute; /* Position the background text */
+                bottom: 0; /* At the bottom. Use top:0 to append it to the top */
+                background: rgb(0, 0, 0); /* Fallback color */
+                background: rgba(0, 0, 0, 0.5); /* Black background with 0.5 opacity */
+                color: #f1f1f1; /* Grey text */
+                width: 100%; /* Full width */
+                padding: 20px; /* Some padding */
+            }
+        </style>
+
+        <script>
+        addEventListener("DOMContentLoaded", function() {
+            var commandButtons = document.querySelectorAll(".command");
+            for (var i=0, l=commandButtons.length; i<l; i++) {
+                var button = commandButtons[i];
+                button.addEventListener("click", function(e) {
+                e.preventDefault();
+
+                var clickedButton = e.target;
+                var command = clickedButton.value;
+
+                var request = new XMLHttpRequest();
+                request.onload = function() {
+                    console.log(request.responseText);
+                    document.getElementById('score_label').innerHTML = request.responseText;
+                    document.getElementById('preview').src=request.responseText;
+                };
+                request.open("GET", "/" + command, true);
+                request.send();
+                });
+            }
+            var remapcommandButtons = document.querySelectorAll(".remap_command");
+            for (var i=0, l=remapcommandButtons.length; i<l; i++) {
+                var button = remapcommandButtons[i];
+                button.addEventListener("click", function(e) {
+                e.preventDefault();
+
+                var clickedButton = e.target;
+                var command = clickedButton.value;
+
+                var request = new XMLHttpRequest();
+                request.onload = function() {
+                    console.log(request.responseText);
+                    document.getElementById('score_label').innerHTML = request.responseText;
+                    document.getElementById('preview').src=request.responseText;
+                };
+                request.open("GET", "/remap/" + command, true);
+                request.send();
+                });
+            }
+
+        }, true);
+        </script>
+
+    </head>
+    <body>
+
+        <h3>Skeggox: Capture</h3>
+        <div class="outer">
+            <span class="live_view">
+                <img id="bg" src="{{ url_for('video_feed') }}">
+
+                <span class="buttons">
+
+                {% for label, command in commands.items() %}
+                    <button class="command command-{{ command }}" value="{{ command }}">
+                        {{ label }}
+                    </button>
+                {% endfor %}
+
+                </span>
+            </span>
+
+            <span class="remap_view">
+                <div class="container">
+                    <img id='preview' src="{{ url_for('static', filename='base.jpg') }}" />
+                    <div class="content">
+                        <h4 id="score_label">points</h1>
+                    </div>
+                </div>
+                <span class="remap-buttons">
+                {% for label, command in remap_commands.items() %}
+                    <button class="remap_command command-{{ command }}" value="{{ command }}">
+                        {{ label }}
+                    </button>
+                {% endfor %}
+
+                </span>
+            </span>
+        </div>
+    </body>
+</html>
