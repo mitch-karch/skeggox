@@ -1,4 +1,4 @@
 *.pyc
-sandbox/interface-server/caps/*
-sandbox/interface-server/static/caps/*
+interface-server/caps/*
+interface-server/static/caps/*
 .DS_Store
