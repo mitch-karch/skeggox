@@ -1,5 +1,8 @@
 *.pyc
-interface-server/caps/*
-interface-server/static/caps/*
+capture-server/caps/*
+capture-server/static/caps/*
+inference-server/caps/*
+inference-server/static/caps/*
+
 .DS_Store
 .vscode/
