@@ -2,3 +2,4 @@
 interface-server/caps/*
 interface-server/static/caps/*
 .DS_Store
+.vscode/
