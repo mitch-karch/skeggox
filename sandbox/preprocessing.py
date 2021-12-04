@@ -150,6 +150,78 @@ def resize_final_img(img):
         img = imutils.resize(img, height = 400, width = 400)
     return img
 
+def scale_crop_img(img):
+    #apply gaussian blur
+    #determine the kernel size. we want it to be big enough where the image will be severely blurred so the board will be able to be more defined
+    kernel = (21,21)
+    blur = cv2.GaussianBlur(img, kernel, 0)
+    
+    #apply a thresholding function to the median blur first before laplacian
+    #for every pixel, the same threshold is applied, if the pixel val is smaller than the threshold, it is 0, otherwise the max
+    thresh = cv2.threshold(blur, 175, 255, cv2.THRESH_BINARY_INV)[1]
+    
+    #clean up the image's threshold
+    morph = morphological(thresh)
+
+    #detect edges
+    img_edges = cv2.Canny(morph, 100, 100, apertureSize=7)
+    
+    #get hough lines from the detected edges
+    lines = cv2.HoughLinesP(img_edges, 1, math.pi / 180.0, 100, minLineLength=100, maxLineGap=30)
+    if lines is None: #if no edges can be detected, run it back on the original image
+        lines = cv2.HoughLinesP(blur, 1, math.pi / 180.0, 100, minLineLength=100, maxLineGap=30)
+    
+    #get the line's edge points to detect the edge of the board
+    x1, y1, x2, y2 = get_edge_points(lines)
+    
+    if x1 > w//3:
+        cropped = resize_final_img(img_color)
+        write_file(cropped)
+        quit
+    
+    #determine the initial length of the detected edge point
+    length = y2-y1
+    # angle = math.degrees(math.atan2(y2-y1, x2-x1))
+    
+    #slope
+    if x1-x2 == 0:
+        x1 += 1
+        
+    m = (y1-y2)/(x1-x2)
+    
+    if m < 1:
+        cropped = resize_final_img(img_color)
+        write_file(cropped)
+        quit
+    
+    #y-intercept
+    b = (x1*y2 - x2*y1)/(x1-x2)
+    
+    #if the length of the edge detected is less than 90% of the img
+    if length < h*.9:
+        tL_x, tL_y = get_startpoint(x1, y1, m, b)
+        bL_x, bL_y = get_endpoint(x2, y2, m, b)
+    
+    #determine new length based on expansion of the line
+    length = bL_y - tL_y
+    
+    #get the bottom perpendicular line according to the found edge
+    bR_x, bR_y = getPerpCoord(tL_x, tL_y, bL_x, bL_y, length)
+    
+    #based on the three found coordinates, find the last coordinates of the board
+    tR_x = tL_x + (bR_x - bL_x)
+    tR_y = tL_y + (bR_y - bL_y)
+
+    #now that we have all four points, perform a four point perspective transform
+    pts = [(tL_x, tL_y), (tR_x, tR_y), (bR_x, bR_y), (bL_x, bL_y)]
+    pts = np.array(pts, dtype = "float32")
+    warped = four_point_transform(img_color, pts)
+    cropped = resize_final_img(warped)
+    
+    cv2.imwrite(join(scale_crop_dir, img_file), cropped)
+    
+    return cropped
+
 #start program
 start_program = time.time()
 
@@ -182,81 +254,13 @@ for img_file in img_files:
     
     h, w = img.shape[:2]
     
-    #determine the kernel size. we want it to be big enough where the image will be severely blurred so the board will be able to be more defined
-    kernel = (21,21)
-    
-    #apply gaussian blur
-    blur = cv2.GaussianBlur(img, kernel, 0)
-    
-    #apply a thresholding function to the median blur first before laplacian
-    #for every pixel, the same threshold is applied, if the pixel val is smaller than the threshold, it is 0, otherwise the max
-    thresh = cv2.threshold(blur, 175, 255, cv2.THRESH_BINARY_INV)[1]
-    
-    #clean up the image's threshold
-    morph = morphological(thresh)
-
-    #detect edges
-    img_edges = cv2.Canny(morph, 100, 100, apertureSize=7)
-    
-    #get hough lines from the detected edges
-    lines = cv2.HoughLinesP(img_edges, 1, math.pi / 180.0, 100, minLineLength=100, maxLineGap=30)
-    if lines is None: #if no edges can be detected, run it back on the original image
-        lines = cv2.HoughLinesP(blur, 1, math.pi / 180.0, 100, minLineLength=100, maxLineGap=30)
-    
-    #get the line's edge points to detect the edge of the board
-    x1, y1, x2, y2 = get_edge_points(lines)
-    
-    if x1 > w//3:
-        cropped = resize_final_img(img_color)
-        write_file(cropped)
-        continue
-    
-    #determine the initial length of the detected edge point
-    length = y2-y1
-    # angle = math.degrees(math.atan2(y2-y1, x2-x1))
-    
-    #slope
-    if x1-x2 == 0:
-        x1 += 1
-        
-    m = (y1-y2)/(x1-x2)
-    if m == 0:
-        m += 1
-    
-    if m < 1:
-        cropped = resize_final_img(img_color)
-        write_file(cropped)
-        continue
-    
-    #y-intercept
-    b = (x1*y2 - x2*y1)/(x1-x2)
-    
-    #if the length of the edge detected is less than 90% of the img
-    if length < h*.9:
-        tL_x, tL_y = get_startpoint(x1, y1, m, b)
-        bL_x, bL_y = get_endpoint(x2, y2, m, b)
-    
-    #determine new length based on expansion of the line
-    length = bL_y - tL_y
-    
-    #get the bottom perpendicular line according to the found edge
-    bR_x, bR_y = getPerpCoord(tL_x, tL_y, bL_x, bL_y, length)
-    
-    #based on the three found coordinates, find the last coordinates of the board
-    tR_x = tL_x + (bR_x - bL_x)
-    tR_y = tL_y + (bR_y - bL_y)
-
-    #now that we have all four points, perform a four point perspective transform
-    pts = [(tL_x, tL_y), (tR_x, tR_y), (bR_x, bR_y), (bL_x, bL_y)]
-    pts = np.array(pts, dtype = "float32")
-    warped = four_point_transform(img_color, pts)
-    cropped = resize_final_img(warped)
+    cropped = scale_crop_img(img)
     
     #timing
     end = time.time()
     print(f'Time elapsed: {end-start}')
     
-    cv2.imwrite(join(scale_crop_dir, img_file), cropped)
+    
     
     # cv2.imshow("Original", img_color) 
     # cv2.imshow("Warped", warped)
@@ -265,6 +269,8 @@ for img_file in img_files:
 
 end_program = time.time()
 print(f'Entire time to process {len(img_files)} images was {end_program-start_program}')
+
+
 
 #Testing purposes
 def show_img(img):
