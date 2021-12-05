@@ -55,6 +55,7 @@
             }
             .outer{
                 display:flex;
+                justify-content: center;
             }
             #preview{
                 width:100%;
@@ -187,37 +188,10 @@
     </head>
     <body>
 
-        <h3>Skeggox: Capture</h3>
+        <h3>Skeggox: Inference</h3>
         <div class="outer">
             <span class="live_view">
                 <img id="bg" src="{{ url_for('video_feed') }}">
-
-                <span class="buttons">
-
-                {% for label, command in commands.items() %}
-                    <button class="command command-{{ command }}" value="{{ command }}">
-                        {{ label }}
-                    </button>
-                {% endfor %}
-
-                </span>
-            </span>
-
-            <span class="remap_view">
-                <div class="container">
-                    <img id='preview' src="{{ url_for('static', filename='base.jpg') }}" />
-                    <div class="content">
-                        <h4 id="score_label">points</h1>
-                    </div>
-                </div>
-                <span class="remap-buttons">
-                {% for label, command in remap_commands.items() %}
-                    <button class="remap_command command-{{ command }}" value="{{ command }}">
-                        {{ label }}
-                    </button>
-                {% endfor %}
-
-                </span>
             </span>
         </div>
     </body>
