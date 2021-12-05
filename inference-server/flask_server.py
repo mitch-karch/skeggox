@@ -59,8 +59,8 @@ def command(cmd=None):
 def remap_command(cmd=None):
     global frame, file_string
 
-    new_string = re.sub('(.*_)(.*).jpg',f"\g<1>{cmd}.jpg",file_string)
-    os.rename(file_string,new_string)
+    new_string = re.sub("(.*_)(.*).jpg", f"\g<1>{cmd}.jpg", file_string)
+    os.rename(file_string, new_string)
     file_string = new_string
 
     response = new_string
