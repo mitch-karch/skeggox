@@ -4,8 +4,6 @@ import pandas as pd
 
 def test_spliting_result(save=False):
     alldf = pd.read_csv(f'train_or.csv')
-    # if you want to change the file path
-    # alldf['filename'] = 'train/' + alldf['filename'] + '.jpeg'
 
     y = alldf['label']
     trndf = pd.DataFrame()
@@ -21,7 +19,6 @@ def test_spliting_result(save=False):
     tr_val_df['filename'], tstdf['filename'], tr_val_df['label'], tstdf['label'] = \
         train_test_split(alldf['filename'], y, test_size=0.15,
                          random_state=4, stratify=y)
-    # because we sue the first split for test we need this second one for validation
     y = tr_val_df['label']
     trndf['filename'], valdf['filename'], trndf['label'], valdf['label'] = \
         train_test_split(tr_val_df['filename'], y, test_size=0.15,
