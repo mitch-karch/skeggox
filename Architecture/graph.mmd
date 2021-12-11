@@ -30,6 +30,7 @@ flowchart LR
 
         flask-server("<img width='80' src='https://flask.palletsprojects.com/en/2.0.x/_static/flask-icon.png' /><br> Python <br/> Flask Server")
         open-cv("<img width='80' src='https://opencv.org/wp-content/uploads/2020/07/OpenCV_logo_no_text_.png' /><br> Python <br/> Open CV Capture")
+        neural-net("<img width='80' src='https://www.pngkey.com/png/full/380-3800394_pytorch-logo.png' /><br> Pytorch <br/> Model Inference")
         gstreamer-pipeline-jetson("<img width='80'; src='https://i.imgur.com/SYN5dLQ.png'/> <br> GStreamer <br/> UDP Pipeline")
         drive("<img src='https://static.thenounproject.com/png/965901-200.png'; width='80'/><br>Storage<br/>Labelled Images ") 
 
@@ -38,10 +39,11 @@ flowchart LR
 
         gstreamer-pipeline-rpi --> gstreamer-pipeline-jetson
         gstreamer-pipeline-jetson --> open-cv
+        open-cv <-. Inference Mode..-> neural-net
         open-cv --> flask-server
         flask-server --> drive
 
-        html-input <----> flask-server
+        html-input <-----> flask-server
         %%kubConfig("<img src='https://cdn2.iconfinder.com/data/icons/mixd/512/20_kubernetes-512.png'; width='80'/><br>Kubernetes<br/> Configuration Yaml") 
         %%kubConfig --> KubNV
         %%kubedgeervice("<img src='https://static.thenounproject.com/png/2040656-200.png'; width='80'/><br>Kubernetes<br/> Service Deployment") 
